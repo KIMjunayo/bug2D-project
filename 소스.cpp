@@ -1,3 +1,4 @@
+
 #include <windows.h>
 #include <tchar.h>
 #include <math.h>
@@ -8,7 +9,7 @@
 //애매하네
 HINSTANCE g_hInst;
 LPCTSTR lpszClass = L"Window Class Name"; 
-LPCTSTR lpszWindowName = L"Windows Program 2"; 
+LPCTSTR lpszWindowName = L"Fly Bug"; 
 
 
 float distance(float x1, float y1, float x2, float y2) {
