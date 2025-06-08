@@ -8,7 +8,7 @@
 //보스전 ? 아 시발 힘들다
 HINSTANCE g_hInst;
 LPCTSTR lpszClass = L"Window Class Name";
-LPCTSTR lpszWindowName = L"Windows Program 2";
+LPCTSTR lpszWindowName = L"Fly Bug";
 
 float distance(float x1, float y1, float x2, float y2) {
     return sqrtf((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
@@ -217,7 +217,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
     RegisterClassEx(&WndClass);
 
     //(800x600 크기)
-    hWnd = CreateWindow(lpszClass, lpszWindowName, WS_OVERLAPPEDWINDOW, 0, 0, 800, 600, NULL, NULL, hInstance, NULL);
+    hWnd = CreateWindow(lpszClass, lpszWindowName, WS_OVERLAPPEDWINDOW, 0, 0, 600, 1000, NULL, NULL, hInstance, NULL);
     ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);
 
@@ -245,6 +245,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
     static int killenemy;
     static bool bossmode = false;
     static DWORD spawn_time = 0;
+
+	static int backgroundY = 0; // 배경 스크롤 위치
+
     switch (iMessage) {
     case WM_CREATE: {
         GetClientRect(hWnd, &rectView);
@@ -253,7 +256,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
         bee.Load(L"bee.png");
         baby.Load(L"baby.png");
         large_bee.Load(L"bigbee.png");
-        bullet.Load(L"bullet.png");
+        bullet.Load(L"baby bullet.png");
         guard.Load(L"guard.png");
         play_guard.Load(L"play.guard.png");
         player.Load(L"player.png");
@@ -262,7 +265,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
         start_time = time(NULL);
         lastBulletTime = GetTickCount();
         // 배경 이미지
-        hBackBitmap = (HBITMAP)LoadImage(g_hInst, TEXT("image2.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+        hBackBitmap = (HBITMAP)LoadImage(g_hInst, TEXT("trem background.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 
         GetObject(hBackBitmap, sizeof(BITMAP), &bmp);
         backWidth = bmp.bmWidth;
@@ -305,6 +308,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
         g.e = false;
 
         // 더블 버퍼링용 비트맵
+
+
         hDoubleBuffer = CreateCompatibleBitmap(hDC, rectView.right, rectView.bottom);
         bossmode = false;
         SetTimer(hWnd, 1, 16, NULL);
@@ -321,6 +326,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 
     case WM_TIMER: {
         if (end == true) return 0;
+
+        backgroundY += 2; // 배경 스크롤 속도
+        if(backgroundY > 10000000)
+			backgroundY %= backHeight; // 배경 위치 초기화
 
         // 플레이어 이동
         float dx = posx - play.x;
@@ -416,14 +425,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
             b.x += b.dx * b.speed;
             b.y += b.dy * b.speed;
 
-            if (b.x < 25 || b.x > 775) { 
+            if (b.x < 25 || b.x > 600) { 
                 b.dx = -b.dx; // x 방향 반사
                 b.x = (b.x < 25) ? 25 : 775; // 경계 내로 위치 조정
             }
             if (b.y < 25 || b.y > 575) { 
                 b.dy = -b.dy; // y 방향 반사
                 b.y = (b.y < 25) ? 25 : 575; // 경계 내로 위치 조정
-                if (b.y >= 575) {
+                if (b.y >= 1000) {
                     b.active = 0; // 화면 아래로 벗어나면 비활성화
                     b.cool = time(NULL); // 쿨타임 시작
                 }
@@ -444,12 +453,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
                 b.cool = time(NULL);
             }
         }
-        //5초 쿨다운
-        if (b.active == 0 && difftime(time(NULL), b.cool) >= 5) {
+        //10초 쿨다운
+        if (b.active == 0 && difftime(time(NULL), b.cool) >= 10) {
             spawnbee(&b);
         }
         //화면 밖 넘어가면 다시 나오게 
-        if (b.active == 1 && b.y > 600) {
+        if (b.active == 1 && b.y > 1000) {
             b.active = 0;
             b.cool = time(NULL); // 비활성화 시간 기록
         }
@@ -619,7 +628,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
                 effects[i].active = false; // 500ms 후 비활성화
             }
         }
-        InvalidateRect(hWnd, NULL, false); // 화면 갱신
+        
+        
+        InvalidateRect(hWnd, NULL, FALSE); // 화면 갱신
         return 0;
     }
 
@@ -633,7 +644,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
             if (end == false) {
             HDC hTempDC = CreateCompatibleDC(hMemDC);
             HBITMAP hOldTemp = (HBITMAP)SelectObject(hTempDC, hBackBitmap);
-            StretchBlt(hMemDC, 0, 0, rectView.right, rectView.bottom, hTempDC, 0, 0, backWidth, backHeight, SRCCOPY);
+			// 배경 이미지 스크롤
+
+			int y = backgroundY % backHeight; // 배경 위치 계산
+
+            //첫번째 배경
+            StretchBlt(hMemDC, 0, y, rectView.right, rectView.bottom, hTempDC, 0, 0, backWidth, backHeight, SRCCOPY);
+			//두번째 배경
+            StretchBlt(hMemDC, 0, y - rectView.bottom, rectView.right, rectView.bottom, hTempDC, 0, 0, backWidth, backHeight, SRCCOPY);
+
             SelectObject(hTempDC, hOldTemp);
             DeleteDC(hTempDC);
             }
@@ -670,7 +689,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
                 }
                 for (int i = 0; i < 10; i++) {
                     if (bullets[i].active) {
-                        bullet.Draw(hMemDC, (int)(bullets[i].x - 20), (int)(bullets[i].y - 20), 40, 40);
+                        bullet.Draw(hMemDC, (int)(bullets[i].x - 20), (int)(bullets[i].y - 20), 20, 20);
                     }
                 }
                 if (g.active == 1) {
