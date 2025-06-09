@@ -328,8 +328,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
         if (end == true) return 0;
 
         backgroundY += 2; // 배경 스크롤 속도
-        if(backgroundY > 10000000)
-			backgroundY %= backHeight; // 배경 위치 초기화
+        if(backgroundY > 10000000){
+		backgroundY %= backHeight; // 배경 위치 초기화
+	}
 
         // 플레이어 이동
         float dx = posx - play.x;
